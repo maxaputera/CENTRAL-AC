@@ -1,0 +1,43 @@
+
+name: Build Minimarket POS APK
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Extract and build APK
+        run: |
+          ZIP=$(find . -type f -iname '*.zip' \
+            -not -path './.git/*' -print -quit)
+          test -n "$ZIP"
+          mkdir -p /tmp/pos
+          unzip -q "$ZIP" -d /tmp/pos
+          gradle --version
+          gradle -p /tmp/pos/minimarket-pos/android \
+            assembleDebug
+
+      - name: Save APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: minimarket-pos-debug-apk
+          path: /tmp/pos/minimarket-pos/android/app/build/outputs/apk/debug/app-debug.apk
